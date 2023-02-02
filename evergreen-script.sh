@@ -17,12 +17,29 @@ function parse_yaml {
    }'
 }
 
+_check_evergreenfile()  {
+    if [ -e ~/.evergreen.yml ]; 
+        then
+        # if file exist the it will be printed 
+        echo "Evegreen file exist"
+        eval $(parse_yaml ~/.evergreen.yml)
+        _setup_host
+    else
+        # is it is not exist then it will be printed
+        echo "~/.evergreen.yml does not exist"
+        echo "Look for the credentials in this location https://spruce.mongodb.com/preferences/cli"
+        read -p "Please enter the user:" user
+        read -p "Please enter the api_key:" api_key
+        _setup_host
+    fi
+}
+
 _check_evergreen() {
     eval $(parse_yaml ~/.evergreen.yml)
     if [ "$user" = "" ]; then
       echo "Everygreen file is not configured";
       echo "Please follow the instructions in https://spruce.mongodb.com/preferences/cli";  
-      exit 1;
+      exit 1
     fi
     _setup_host
 }
@@ -35,21 +52,29 @@ _setup_volume () {
     echo $volume_response
 }
 
+
+
 _setup_host() {
     eval $(parse_yaml config.yml)
+    if [ -e ~/.ssh/$host_key.pub ];then
+        echo "Reading ssh key"
+    else 
+        echo "ssh file not found"
+        echo "ensure you have the correct key configured in config.yml"
+        exit 1
+    fi
+
     ssh_key=`cat ~/.ssh/$host_key.pub`
-    eval $(parse_yaml ~/.evergreen.yml)
+   
     host_response=$(curl -H Api-User:$user -H Api-Key:$api_key -d "{\"distro\":\"$host_distro\",\"keyname\":\"$ssh_key\", \"no_expiration\": true,\"homeVolumeSize\":500, \"region\":\"$host_region\",  \"savePublicKey\":true}"  https://evergreen.mongodb.com/api/rest/v2/hosts)
     echo $host_response
+    echo "If you see the host details above. Please visit https://spruce.mongodb.com/spawn/host to get the host name"
 }
-
-
-
 
 
 setup_evergreen () {
     #_setup_volume
-    _check_evergreen
+    _check_evergreenfile
 }
 
 setup_evergreen
