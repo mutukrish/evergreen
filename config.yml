@@ -1,0 +1,11 @@
+## volume definitions
+volume:
+  size: 500
+  type: gp2
+  zone: us-east-1a
+
+## host definitions
+host:
+  distro: ubuntu1804-workstation
+  key: id_rsa
+  region: us-east-1
